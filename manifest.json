@@ -1,0 +1,13 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "super_app",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "SuA",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "id": "/super_app",
+  "description": "A fast and modern super app for booking services and managing daily needs."
+}
