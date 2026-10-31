@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super App Peshawar - PRO</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-black text-white min-h-screen">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const SUPABASE_URL = "https://hudkbzdyymnlilucliyl.supabase.co"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1ZGtiemR5eW1ubGlsdWNsaXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0Mzg4MTAsImV4cCI6MjEwOTAxNDgxMH0.BWRJ2PHdpiyWSZvJtCUmUHSfVB76_4onlVLrMJN5r9M";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function SuperApp() {
+      const [currentView, setCurrentView] = useState('main');
+      const [selectedItem, setSelectedItem] = useState(null);
+      const [activeBooking, setActiveBooking] = useState(null);
+      const [count, setCount] = useState(0);
+      const [isSaving, setIsSaving] = useState(false);
+      const [loc, setLoc] = useState('Hayatabad, Peshawar');
+
+      const loadCount = async () => {
+        const { count } = await supabaseClient.from('Booking').select('*', { count: 'exact', head: true });
+        if(count !== null) setCount(count);
+      };
+      useEffect(() => { loadCount(); }, []);
+
+      const items = {
+        rides: [
+          { id:1, name:'Bykea (Bike)', desc:'Fastest ride', price:'Rs. 80', tag:'High Demand', icon:'🏍️' },
+          { id:2, name:'Rickshaw', desc:'Affordable', price:'Rs. 120', tag:'Local', icon:'🛺' },
+          { id:3, name:'AC Taxi', desc:'Comfortable sedan', price:'Rs. 250', tag:'Premium', icon:'🚕' }
+        ],
+        consts: [
+          { id:4, name:'Electrician', desc:'Wiring & UPS', price:'Rs. 300', tag:'Verified', icon:'⚡' },
+          { id:5, name:'Plumber', desc:'Pipe repair', price:'Rs. 350', tag:'Verified', icon:'🔧' },
+          { id:6, name:'Mistry', desc:'Tile fixing', price:'Quote', tag:'Expert', icon:'🧱' },
+          { id:7, name:'Painter', desc:'Wall painter', price:'Quote', tag:'Top Rated', icon:'🎨' }
+        ],
+        tech: [
+          { id:8, name:'Doctor Home Visit', desc:'MBBS', price:'Rs. 1000', tag:'Medical', icon:'🩺' },
+          { id:9, name:'Lab Collector', desc:'Home blood test', price:'Rs. 200', tag:'24/7', icon:'🧪' }
+        ]
+      };
+
+      const book = async (item) => {
+        setIsSaving(true);
+        const { error } = await supabaseClient.from('Booking').insert([{ service_name: item.name, description: item.desc, price: item.price, customer_location: loc, status: 'held' }]);
+        if(error) alert("Error: "+error.message);
+        else { await loadCount(); setActiveBooking(item); setCurrentView('done'); }
+        setIsSaving(false);
+      };
+
+      const Card = ({it}) => (
+        <div onClick={()=>setSelectedItem(it)} className={`p-4 rounded-2xl border flex justify-between items-center cursor-pointer ${selectedItem?.id===it.id?'border-white bg-zinc-900':'border-zinc-800'}`}>
+          <div className="flex gap-3 items-center"><span className="text-2xl p-3 border border-zinc-800 rounded-xl">{it.icon}</span><div><h3 className="font-bold text-sm">{it.name}</h3><p className="text-[11px] text-zinc-500">{it.desc}</p></div></div><p className="text-xs font-bold">{it.price}</p>
+        </div>
+      );
+
+      return (
+        <div className="pb-28 min-h-screen bg-black">
+          <header className="sticky top-0 bg-black border-b border-zinc-800 p-4 flex justify-between"><h1 className="font-black">SUPER APP <span className="bg-white text-black text-[9px] px-2 py-1 rounded">PRO</span></h1><span className="text-xs border border-zinc-700 px-3 py-1 rounded-full">{count} BOOKINGS</span></header>
+          <main className="p-4 space-y-3">
+            <div className="p-3 border border-zinc-800 rounded-2xl text-xs flex justify-between"><span>📍 {loc}</span><button onClick={()=>{const l=prompt("Area?",loc); if(l) setLoc(l)}} className="underline">Change</button></div>
+            {currentView==='main' && <div className="space-y-3"><div onClick={()=>setCurrentView('rides')} className="p-4 border border-zinc-800 rounded-2xl flex justify-between cursor-pointer"><span>🏍️ Rider</span><span>→</span></div><div onClick={()=>setCurrentView('consts')} className="p-4 border border-zinc-800 rounded-2xl flex justify-between cursor-pointer"><span>🏗️ Construction</span><span>→</span></div><div onClick={()=>setCurrentView('tech')} className="p-4 border border-zinc-800 rounded-2xl flex justify-between cursor-pointer"><span>🩺 Technician</span><span>→</span></div></div>}
+            {currentView==='rides' && <div className="space-y-3"><button onClick={()=>setCurrentView('main')} className="text-xs underline">← Back</button>{items.rides.map(it=><Card key={it.id} it={it} />)}</div>}
+            {currentView==='consts' && <div className="space-y-3"><button onClick={()=>setCurrentView('main')} className="text-xs underline">← Back</button>{items.consts.map(it=><Card key={it.id} it={it} />)}</div>}
+            {currentView==='tech' && <div className="space-y-3"><button onClick={()=>setCurrentView('main')} className="text-xs underline">← Back</button>{items.tech.map(it=><Card key={it.id} it={it} />)}</div>}
+            {currentView==='done' && activeBooking && <div className="p-6 border border-zinc-700 rounded-2xl text-center space-y-4"><div className="text-5xl">{activeBooking.icon}</div><h2 className="text-xl font-bold">{activeBooking.name}</h2><p className="text-green-400 text-sm">✅ Supabase me save ho gaya!</p><p className="text-xs text-zinc-400">Location: {loc} | {activeBooking.price}</p><button onClick={()=>{setCurrentView('main'); setSelectedItem(null);}} className="w-full bg-white text-black py-3 rounded-full font-bold">OK, Go Home</button></div>}
+          </main>
+          {selectedItem && currentView!=='done' && currentView!=='main' && <div className="fixed bottom-4 left-4 right-4 bg-zinc-900 border border-white rounded-2xl p-4 flex justify-between items-center"><div><p className="text-[10px] text-zinc-500">{selectedItem.name}</p><p className="font-bold text-sm">{selectedItem.price}</p></div><button onClick={()=>book(selectedItem)} disabled={isSaving} className="bg-white text-black px-6 py-3 rounded-full font-bold text-xs">{isSaving?"Saving...":"Book Now"}</button></div>}
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<SuperApp />);
+  </script>
+</body>
+</html>
